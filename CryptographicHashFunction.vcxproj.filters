@@ -26,5 +26,17 @@
     <ClInclude Include="Aegis1024.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UserInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="empiricalTesting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="HashOutput.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="heatmap.csv" />
   </ItemGroup>
 </Project>

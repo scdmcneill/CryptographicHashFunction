@@ -11,98 +11,54 @@
 //											AEGIS-1024-bit Sponge Hash
 // State: 16 lanes x 64-bit = 1024 bits
 // Rate: 8 lanes x 64-bit = 512 bits (64 bytes per absorb / squeeze)
-// Cap: 8 lanes x 64-bit = 512 bits
+// Capacity: 8 lanes x 64-bit = 512 bits
+// 
 // =========================================================================================================
 
-namespace chf {
-	// ----- Parameters -----
-	static constexpr size_t STATE_LANES = 16;
-	static constexpr size_t RATE_LANES = 8;
-	static constexpr size_t RATE_BYTES = RATE_LANES * 8;
-	static constexpr size_t BLOCK_SIZE = RATE_BYTES;
-	static constexpr int	ROUNDS = 12;
+namespace HashFunction {
+	constexpr size_t LANE_BITS		=	64;
+	constexpr size_t LANE_BYTES		=	LANE_BITS / 8;
 
-	// ----- Helpers -----
-	static inline uint64_t rotate(uint64_t x, int rotations) {
-		return (x << rotations) | (x >> (64 - rotations));
-	}
+	constexpr size_t STATE_BITS		=	1024;
+	constexpr size_t RATE_BITS		=	512;
+	constexpr size_t CAPACITY_BITS	=	512;
+
+	constexpr size_t STATE_LANES	=	STATE_BITS / LANE_BITS; // 16 lanes
+	constexpr size_t RATE_LANES		=	RATE_BITS / LANE_BITS;   // 8 lanes
+	constexpr size_t CAPACITY_LANES	=	CAPACITY_BITS / LANE_BITS; // 8 lanes
+
+	constexpr size_t STATE_BYTES	=	STATE_LANES * LANE_BYTES; // 128 bytes
+	constexpr size_t RATE_BYTES		=	RATE_LANES * LANE_BYTES;   // 64 bytes
+
+	using StateLane		= std::uint64_t;
+	using StateBlock	= std::array<StateLane, STATE_LANES>;
+	using RateBlock		= std::array<uint8_t, RATE_BYTES>;
+
+	// AEGIS-1024 Round Constants derived from first 12 SHA-512 K constants
+	constexpr std::array<StateLane, 12> AEGIS_CONSTANTS_A = {
+		0x72be5d74f27b896fULL, 0x80deb1fe3b1696b1ULL,
+		0x9bdc06a725c71235ULL, 0xc19bf174cf692694ULL,
+		0xe49b69c19ef14ad2ULL, 0xefbe4786384f25e3ULL,
+		0x0fc19dc68b8cd5b5ULL, 0x240ca1cc77ac9c65ULL,
+		0x2de92c6f592b0275ULL, 0x4a7484aa6ea6e483ULL,
+		0x5cb0a9dcbd41fbd4ULL, 0x76f988da831153b5ULL
+	};
 }
 
-using namespace chf;
-using std::cout;
-using std::vector;
-
-struct State {
-	std::array<uint64_t, STATE_LANES> state{};
-};
-
-// "Nothing-up-my-sleeve" round constants go here
-static constexpr std::array<uint64_t, ROUNDS> ROUND_CONSTANTS = {
-
-};
+using namespace HashFunction;
 
 class Aegis {
 public: 
-	Aegis();
+	
+	void absorbBlock(StateBlock& state, const RateBlock& messageBlock);
 
-	void resetState() {
-		
-	}
+	void squeezeBlock(const StateBlock& state, RateBlock& outputBlock);
 
+	void applyPermutation(StateBlock& state);
 
-	// ARX permutation over 16 lanes
-	static inline void permutation(State& S) {
-		for (int round = 0; round < ROUNDS; ++round) {
-			// Mix groups of 4 lanes
-			for (int i = 0; i < 16; i += 4) {
-				uint64_t& laneA = S.state[i + 0];
-				uint64_t& laneB = S.state[i + 1];
-				uint64_t& laneC = S.state[i + 2];
-				uint64_t& laneD = S.state[i + 3];
+	RateBlock hashMessage(const std::vector<uint8_t>& message);
 
-				laneA += laneB; laneD ^= laneA; laneD = rotate(laneD, 32);
-				laneC += laneD; laneB ^= laneC; laneB = rotate(laneB, 24);
-				laneA += laneB; laneD ^= laneA; laneD = rotate(laneD, 16);
-				laneC += laneD; laneB ^= laneC; laneB = rotate(laneB, 63);
-
-			}
-
-			// Cross-Lane Diffusion: shuffle and XOR neighbors
-			// Rotate lanes by (round + 1) and XOR in a neighbor rotated value
-			std::array<uint64_t, 16> tempArray{};
-			for (int i = 0; i < 16; ++i)
-				tempArray[i] = S.state[i];
-			int shift = (round + 1) % 16;
-			for (int i = 0; i < 16; ++i) {
-				S.state[i] = tempArray[(i + shift) & 15] ^ rotate(tempArray[(i + 7) & 15], (i + round) % 64);
-			}
-
-			// Inject Round constant into lane 0 and lane 8
-			S.state[0] ^= ROUND_CONSTANTS[round];
-			S.state[8] ^= rotate(ROUND_CONSTANTS[round], 17);
-		}
-	}
-
-
-
-	// Squeeze bytes
-	vector<uint8_t> squeeze(size_t targetByteSize) {
-		vector<uint8_t> squeezedBlock;
-
-		return squeezedBlock;
-	}
 	
 private:
-	State state_{};
-	std::array<uint8_t, BLOCK_SIZE>	buffer_;
-	size_t bufferUsed_ = 0;
-	bool finalized_ = false;
-
-	std::vector<uint8_t> squeezeCache_{};
-	size_t squeezePtr_ = 0;
-
-	void absorb_block(const uint8_t* block) {
-		// XOR 64 bytes into rate (8 lanes)
-		
-	}
+	StateBlock state;
 };
