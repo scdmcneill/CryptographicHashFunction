@@ -34,14 +34,14 @@ namespace HashFunction {
 	using StateBlock	= std::array<StateLane, STATE_LANES>;
 	using RateBlock		= std::array<uint8_t, RATE_BYTES>;
 
-	// AEGIS-1024 Round Constants derived from first 12 SHA-512 K constants
-	constexpr std::array<StateLane, 12> AEGIS_CONSTANTS_A = {
-		0x72be5d74f27b896fULL, 0x80deb1fe3b1696b1ULL,
-		0x9bdc06a725c71235ULL, 0xc19bf174cf692694ULL,
-		0xe49b69c19ef14ad2ULL, 0xefbe4786384f25e3ULL,
-		0x0fc19dc68b8cd5b5ULL, 0x240ca1cc77ac9c65ULL,
-		0x2de92c6f592b0275ULL, 0x4a7484aa6ea6e483ULL,
-		0x5cb0a9dcbd41fbd4ULL, 0x76f988da831153b5ULL
+	// AEGIS-1024 Round Constants derived from first 12 SHA-512 constants
+	constexpr std::array<StateLane, 12> AEGIS_CONSTANTS = {
+		0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
+		0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,
+		0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL,
+		0x923f82a4af194f9bULL, 0xab1c5ed5da6d8118ULL,
+		0xd807aa98a3030242ULL, 0x12835b0145706fbeULL,
+		0x243185be4ee4b28cULL, 0x550c7dc3d5ffb4e2ULL
 	};
 }
 
@@ -49,7 +49,6 @@ using namespace HashFunction;
 
 class Aegis {
 public: 
-	
 	void absorbBlock(StateBlock& state, const RateBlock& messageBlock);
 
 	void squeezeBlock(const StateBlock& state, RateBlock& outputBlock);

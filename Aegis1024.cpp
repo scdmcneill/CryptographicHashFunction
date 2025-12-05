@@ -1,26 +1,5 @@
 #include "Aegis1024.h"
 
-void Aegis::absorbBlock(StateBlock& state, const RateBlock& messageBlock) {
-	
-	// Byte-level access to the state and message block
-	auto* stateBytes = reinterpret_cast<uint8_t*>(state.data());
-
-	// XOR the message block into the first RATE_SIZE lanes of the state
-	for (size_t i = 0; i < RATE_BYTES; ++i) {
-		stateBytes[i] ^= messageBlock[i];
-	}
-
-	applyPermutation(state);
-}
-
-void Aegis::squeezeBlock(const StateBlock& state, RateBlock& outputBlock) {
-	const auto* stateBytes = reinterpret_cast<const uint8_t*>(state.data());
-
-	for (size_t i = 0; i < RATE_BYTES; ++i) {
-		outputBlock[i] = stateBytes[i];
-	}
-}
-
 StateLane rotateLeft(StateLane& lane, unsigned int shiftAmount) {
 	return (lane << shiftAmount) | (lane >> (64 - shiftAmount));
 }
@@ -46,8 +25,8 @@ void quarterRound(StateLane& lane1, StateLane& lane2, StateLane& lane3, StateLan
 
 void Aegis::applyPermutation(StateBlock& state) {
 	for (size_t round = 0; round < 12; ++round) {
-		const StateLane roundConstants1 = AEGIS_CONSTANTS_A[round];
-		const StateLane roundConstants2 = AEGIS_CONSTANTS_A[11 - round];
+		const StateLane roundConstants1 = AEGIS_CONSTANTS[round];
+		const StateLane roundConstants2 = AEGIS_CONSTANTS[11 - round];
 
 		// Column shuffle
 		quarterRound(state[0], state[4], state[8], state[12], roundConstants1, roundConstants2);
@@ -60,6 +39,27 @@ void Aegis::applyPermutation(StateBlock& state) {
 		quarterRound(state[1], state[6], state[11], state[12], roundConstants1, roundConstants2);
 		quarterRound(state[2], state[7], state[8], state[13], roundConstants1, roundConstants2);
 		quarterRound(state[3], state[4], state[9], state[14], roundConstants1, roundConstants2);
+	}
+}
+
+void Aegis::absorbBlock(StateBlock& state, const RateBlock& messageBlock) {
+	
+	// Byte-level access to the state and message block
+	auto* stateBytes = reinterpret_cast<uint8_t*>(state.data());
+
+	// XOR the message block into the first RATE_SIZE lanes of the state
+	for (size_t i = 0; i < RATE_BYTES; ++i) {
+		stateBytes[i] ^= messageBlock[i];
+	}
+
+	applyPermutation(state);
+}
+
+void Aegis::squeezeBlock(const StateBlock& state, RateBlock& outputBlock) {
+	const auto* stateBytes = reinterpret_cast<const uint8_t*>(state.data());
+
+	for (size_t i = 0; i < RATE_BYTES; ++i) {
+		outputBlock[i] = stateBytes[i];
 	}
 }
 
